@@ -51,11 +51,12 @@ public class Node {
         return streamDirection;
     }
 
-    public void setStatisticsStreamIds(String[] statisticsStreamIds) {
-        this.statisticsStreamIds = statisticsStreamIds;
-    }
     public String[] getStatisticsStreamIds() {
         return statisticsStreamIds;
+    }
+
+    public void setStatisticsStreamIds(String[] statisticsStreamIds) {
+        this.statisticsStreamIds = statisticsStreamIds;
     }
 
     @Override

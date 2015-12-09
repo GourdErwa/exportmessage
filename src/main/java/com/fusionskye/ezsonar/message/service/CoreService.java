@@ -42,8 +42,8 @@ public class CoreService {
      * 导出 cvs 文件
      * EZSonar 导出的数据存放路径如下，字母命名， 文件名使用日期&时间格式， 例如 “201512031200”
      * 文件为一分钟一个文件，目录结构：
-     * 一级目录：业务路径，如***系统
-     * 二级目录：逻辑节点，如***应用服务器
+     * 一级目录:业务路径，如***系统
+     * 二级目录:逻辑节点，如***应用服务器
      * 二级目录:存放一分钟一个的文件
      *
      * @param searchVo       searchVo
@@ -99,27 +99,26 @@ public class CoreService {
                 Object count = map.get(EsService.COUNT_FIELD_NAME);
                 count = count == null ? 0 : count;
 
-                Object _latency_msec = map.get(EsService.LATENCY_MSEC_FIELD_NAME);
-                _latency_msec = _latency_msec == null ? 0 : _latency_msec;
+                Object latencyMsec = map.get(EsService.LATENCY_MSEC_FIELD_NAME);
+                latencyMsec = latencyMsec == null ? 0 : latencyMsec;
 
                 Object response = map.get(EsService.RESPONSE_FIELD_NAME);
                 response = response == null ? 0 : response;
 
-
                 builder.append(",").
                         append(count).
                         append(",").
-                        append(_latency_msec).
+                        append(latencyMsec).
                         append(",").
                         append(response);
 
+                //拼接统计字段值
                 for (String string : fieldStrList) {
                     Object o = map.get(string);
                     final boolean b = o == null;
                     if (DELETE_HAS_NULL_VALUE_LINE && b) {
                         continue Loop1;
                     }
-                    o = b ? "" : o;
                     builder.append(",").append(o);
                 }
 
@@ -188,9 +187,10 @@ public class CoreService {
             long endTimeMsc = startTimeMsc + MILLISECOND_IN_MINUTE;
 
             final List<SearchVo> search = coreService.esService.search(startTimeMsc, endTimeMsc);
+            final String exportCVSFilePath = coreService.getSystemProperties().getExportCVSFilePath();
 
             for (SearchVo vo : search) {
-                createCSVFile(vo, coreService.getSystemProperties().getExportCVSFilePath());
+                createCSVFile(vo, exportCVSFilePath);
             }
 
         }

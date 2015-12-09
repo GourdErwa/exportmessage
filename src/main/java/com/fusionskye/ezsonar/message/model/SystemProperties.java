@@ -161,7 +161,7 @@ public class SystemProperties {
                 .add("mongodbHost", mongodbHost)
                 .add("mongodbDatabase", mongodbDatabase)
                 .add("mongodbPort", mongodbPort)
-                .add("exportCVSFileEncoding",exportCVSFileEncoding)
+                .add("exportCVSFileEncoding", exportCVSFileEncoding)
                 .add("exportCVSFilePath", exportCVSFilePath)
                 .add("calculationSecondsAhead", calculationSecondsAhead)
                 .add("statisticalFieldValues", statisticalFieldValues)
