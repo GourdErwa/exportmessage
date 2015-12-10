@@ -15,8 +15,8 @@ import java.util.Map;
  */
 public class SearchVo {
 
-    private static final DateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd hh:mm");
-    private static final DateFormat SIMPLE_FILE_NAME_DATE_FORMAT = new SimpleDateFormat("yyyyMMddhhmm");
+    private static final DateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm");
+    private static final DateFormat SIMPLE_FILE_NAME_DATE_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss");
     //(ms)
     private long startTime;
     private String startTimeFormat;

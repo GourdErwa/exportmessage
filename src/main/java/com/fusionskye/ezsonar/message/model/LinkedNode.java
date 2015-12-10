@@ -33,6 +33,19 @@ public class LinkedNode {
         this.next = next;
     }
 
+    /**
+     * 获取某个节点的尾节点
+     * @param linkedNode
+     * @return
+     */
+    public static LinkedNode getTailNode(LinkedNode linkedNode) {
+        final LinkedNode next = linkedNode.getNext();
+        if (next == null) {
+            return linkedNode;
+        }
+        return getTailNode(next);
+    }
+
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)

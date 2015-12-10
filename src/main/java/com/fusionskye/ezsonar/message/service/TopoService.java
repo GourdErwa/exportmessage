@@ -8,6 +8,7 @@ import com.fusionskye.ezsonar.message.model.Node;
 import com.fusionskye.ezsonar.message.model.Topo;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
@@ -25,18 +26,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 /**
  * @author wei.Li by 15/12/7
  */
 public final class TopoService {
 
+    /**
+     * 所有别名
+     * topoId   , 别名
+     * nodeName , 别名
+     */
+    private static final Map<String, String> ALIAS = Maps.newHashMap();
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TopoService.class);
 
     //查询 Topo 对象字段
     private static final BasicDBObject BASIC_DB_KEYS = new BasicDBObject("name", 1).append("connections", 1).append("nodes", 1);
-    //待统计的业务路径 id-> 节点name
+    //待统计的业务路径 id, 节点name
     private static final Map<String, List<String>> TOPO_ID_NODE_NAMES = Maps.newConcurrentMap();
-
     //待统计的业务路径封装对象
     private static final List<Topo> TOPO_STATISTICS = Lists.newArrayList();
 
@@ -44,7 +53,7 @@ public final class TopoService {
         try {
             analyzerTopoNodeNameFile();
         } catch (Exception e) {
-            Main.exitSystem("解析路径->节点名称配置文件过程错误 error=" + e.getMessage());
+            Main.exitSystem("解析路径,节点名称配置文件过程错误 error=" + e);
         }
     }
 
@@ -68,11 +77,16 @@ public final class TopoService {
 
             Map<String, List<String>> map = Maps.newHashMap();
 
+            int i0 = 0;
             final List elements = rootElement.elements();
             for (Object o : elements) {
                 final Element o1 = (Element) o;
                 final String topoId = o1.attribute("id").getValue();
-
+                final String alias = o1.attribute("alias").getValue();
+                checkArgument(!topoId.isEmpty(), "路径 id 不能为空");
+                checkArgument(!alias.isEmpty(), "路径 " + topoId + " 别名不能为空");
+                ALIAS.put(topoId, alias);
+                i0++;
                 final Element statisticsNodes = o1.element("statisticsNodes");
                 final List nodeElements = statisticsNodes.elements();
                 if (!nodeElements.isEmpty()) {
@@ -80,15 +94,22 @@ public final class TopoService {
                     for (Object nodeElement : nodeElements) {
                         final Element node = ((Element) nodeElement);
                         final String nodeName = node.attribute("name").getValue();
+                        final String aliasNodeName = node.attribute("alias").getValue();
+                        checkArgument(!nodeName.isEmpty(), "节点 name 不能为空");
+                        checkArgument(!aliasNodeName.isEmpty(),"节点 " + nodeName + " 别名不能为空");
+                        ALIAS.put(nodeName, aliasNodeName);
+                        i0++;
                         nodeNames.add(nodeName);
                     }
                     map.put(topoId, nodeNames);
                 }
-
             }
+
+            checkArgument(Sets.newHashSet(ALIAS.values()).size() == i0, "解析路径,节点名称配置文件过程错误,别名配置有重复");
+
             TOPO_ID_NODE_NAMES.clear();
             TOPO_ID_NODE_NAMES.putAll(map);
-            LOGGER.info("配置文件解析结果为 待统计路径 -> 节点名称  =  {}", map);
+            LOGGER.info("配置文件解析结果为 待统计路径 , 节点名称  =  {}", map);
         } finally {
             if (fileInputStream != null) {
                 fileInputStream.close();
@@ -98,7 +119,7 @@ public final class TopoService {
 
 
     /**
-     * 将配置文件路径->节点 查询数据库后映射为 {@link Topo}
+     * 将配置文件路径,节点 查询数据库后映射为 {@link Topo}
      */
     public static void analyzerTopoForDb() {
 
@@ -191,5 +212,9 @@ public final class TopoService {
 
     public static List<Topo> getTopoStatistics() {
         return TOPO_STATISTICS;
+    }
+
+    public static String getAliasName(String id) {
+        return ALIAS.get(id);
     }
 }

@@ -72,7 +72,7 @@ public class Topo {
                         node.setStatisticsStreamIds(streamIds);
                         iterator.remove();
                     } else {
-                        LOGGER.error("配置文件解析为 待统计路径 id={} name={} -> 节点名称={} 未找到统计该节点数据所需的流,默认不进行统计",
+                        LOGGER.error("配置文件解析为 待统计路径 id={} name={} , 节点名称={} 未找到统计该节点数据所需的流,默认不进行统计",
                                 this.id, this.name, nodeName);
                     }
                     break;

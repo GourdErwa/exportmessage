@@ -47,8 +47,8 @@ public final class EsService {
 
     //索引名称后缀格式
     private static final DateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
-    //待统计分组字段 <key,别名>
-    private static final Map<String, String> STATISTICS_GROUP_FIELD_MAP = Maps.newTreeMap();
+    //待统计分组字段 <key,别名> - 保证与配置信息顺序一致,使用 newLinkedHashMap
+    private static final Map<String, String> STATISTICS_GROUP_FIELD_MAP = Maps.newLinkedHashMap();
     private static final NumberFormat NUMBER_FORMAT;
     private static TermsBuilder BUILDERS = null;
 
@@ -81,10 +81,10 @@ public final class EsService {
         fieldValues = fieldValues.replaceAll("\\s", "");
         final String[] split = fieldValues.split(",");
 
-        Map<String, String> map = Maps.newTreeMap();
+        Map<String, String> map = Maps.newLinkedHashMap();
         for (String s : split) {
             final String[] split1 = s.split("\\|");
-            checkArgument(split1.length == 2, "统计字段" + s + " 配置格式错误");
+            checkArgument(split1.length == 2, "统计字段 [" + s + "] 配置格式错误");
             map.put(split1[0], split1[1]);
         }
 
@@ -107,7 +107,9 @@ public final class EsService {
                         AggregationBuilders.stats(LATENCY_MSEC_FIELD_NAME).field(LATENCY_MSEC_FIELD_NAME)
                 )
                 .subAggregation(
-                        AggregationBuilders.filter(RESPONSE_FIELD_NAME).filter(FilterBuilders.termFilter("_ret_code.probe_st", "noresponse"))
+                        AggregationBuilders.filter(RESPONSE_FIELD_NAME).filter(
+                                FilterBuilders.notFilter(FilterBuilders.termFilter("_ret_code.probe_st", "noresponse"))
+                        )
                 );
 
         for (int i = size - 1; i > 0; i--) {
@@ -175,7 +177,7 @@ public final class EsService {
         final SearchResponse searchResponse = execute.actionGet();
 
         final Aggregations aggregations = searchResponse.getAggregations();
-        //MessageGatewayHelper.debugSearchResponse(searchRequestBuilder, searchResponse);
+       // MessageGatewayHelper.debugSearchResponse(searchRequestBuilder, searchResponse);
 
         final ArrayList<String> groupIds = Lists.newArrayList(STATISTICS_GROUP_FIELD_MAP.keySet());
         final Map<String, Aggregation> aggregationMap = aggregations.asMap();
@@ -255,12 +257,12 @@ public final class EsService {
                 final LinkedNode countNode = new LinkedNode(COUNT_FIELD_NAME, count);
                 final LinkedNode latencyMsecNode = new LinkedNode(LATENCY_MSEC_FIELD_NAME, NUMBER_FORMAT.format(avg));
                 countNode.setNext(latencyMsecNode);
-                linkedNode.setNext(countNode);
+                LinkedNode.getTailNode(linkedNode).setNext(countNode);
             } else if (value instanceof InternalFilter) {
                 final InternalFilter internalFilter = (InternalFilter) value;
                 final long docCount = internalFilter.getDocCount();
                 final LinkedNode responseNode = new LinkedNode(RESPONSE_FIELD_NAME, docCount);
-                linkedNode.setNext(responseNode);
+                LinkedNode.getTailNode(linkedNode).setNext(responseNode);
             }
         }
     }

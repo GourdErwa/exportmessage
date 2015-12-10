@@ -32,6 +32,7 @@ public class SystemProperties {
 
     exportCVSFilePath,
             exportCVSFileEncoding,
+            isShowTableHead,
 
     calculationSecondsAhead,
             statisticalFieldValues;
@@ -40,7 +41,7 @@ public class SystemProperties {
     private SystemProperties(String log4j2RunModel,
                              String elasticsearchUrl, String elasticsearchCluster, String elasticsearchIndexPrefix, String elasticsearchIndexType,
                              String mongodbUseAuth, String mongodbUser, String mongodbPassword, String mongodbHost, String mongodbDatabase, String mongodbPort,
-                             String exportCVSFilePath, String exportCVSFileEncoding,
+                             String exportCVSFilePath, String exportCVSFileEncoding, String isShowTableHead,
                              String calculationSecondsAhead, String statisticalFieldValues) {
         this.log4j2RunModel = log4j2RunModel;
         this.elasticsearchUrl = elasticsearchUrl;
@@ -55,6 +56,7 @@ public class SystemProperties {
         this.mongodbPort = mongodbPort;
         this.exportCVSFilePath = exportCVSFilePath;
         this.exportCVSFileEncoding = exportCVSFileEncoding;
+        this.isShowTableHead = isShowTableHead;
         this.calculationSecondsAhead = calculationSecondsAhead;
         this.statisticalFieldValues = statisticalFieldValues;
     }
@@ -137,6 +139,9 @@ public class SystemProperties {
         return exportCVSFileEncoding;
     }
 
+    public String getIsShowTableHead() {
+        return isShowTableHead;
+    }
 
     public String getCalculationSecondsAhead() {
         return calculationSecondsAhead;
@@ -161,8 +166,9 @@ public class SystemProperties {
                 .add("mongodbHost", mongodbHost)
                 .add("mongodbDatabase", mongodbDatabase)
                 .add("mongodbPort", mongodbPort)
-                .add("exportCVSFileEncoding", exportCVSFileEncoding)
                 .add("exportCVSFilePath", exportCVSFilePath)
+                .add("exportCVSFileEncoding", exportCVSFileEncoding)
+                .add("isShowTableHead", isShowTableHead)
                 .add("calculationSecondsAhead", calculationSecondsAhead)
                 .add("statisticalFieldValues", statisticalFieldValues)
                 .toString();
