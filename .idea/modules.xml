@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/ezsonar-ExportMessage-CMB.iml" filepath="$PROJECT_DIR$/ezsonar-ExportMessage-CMB.iml" />
+      <module fileurl="file://$PROJECT_DIR$/exportmessage-CMB.iml" filepath="$PROJECT_DIR$/exportmessage-CMB.iml" />
     </modules>
   </component>
 </project>
