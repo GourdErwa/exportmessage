@@ -2,14 +2,16 @@ package com.fusionskye.ezsonar.message.model;
 
 import com.google.common.base.MoreObjects;
 
+import java.util.Arrays;
+
 /**
  * 节点类
  */
 public class Node {
 
-    public static String IN = "in";//流入
-    public static String OUT = "out";//流出
-    public static String DOUBLE = "double";//两边
+    public static final String IN = "in";//流入
+    public static final String OUT = "out";//流出
+    public static final String DOUBLE = "double";//两边
 
     /**
      * 节点ID
@@ -52,11 +54,11 @@ public class Node {
     }
 
     public String[] getStatisticsStreamIds() {
-        return statisticsStreamIds;
+        return statisticsStreamIds == null ? null : Arrays.copyOf(statisticsStreamIds, statisticsStreamIds.length);
     }
 
     public void setStatisticsStreamIds(String[] statisticsStreamIds) {
-        this.statisticsStreamIds = statisticsStreamIds;
+        this.statisticsStreamIds = statisticsStreamIds == null ? null : Arrays.copyOf(statisticsStreamIds, statisticsStreamIds.length);
     }
 
     @Override

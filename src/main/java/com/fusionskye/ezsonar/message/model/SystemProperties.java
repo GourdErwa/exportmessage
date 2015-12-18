@@ -35,14 +35,15 @@ public class SystemProperties {
             isShowTableHead,
 
     calculationSecondsAhead,
-            statisticalFieldValues;
+            statisticalFieldValues,
+            isStatisticalNoResponseField;
 
 
     private SystemProperties(String log4j2RunModel,
                              String elasticsearchUrl, String elasticsearchCluster, String elasticsearchIndexPrefix, String elasticsearchIndexType,
                              String mongodbUseAuth, String mongodbUser, String mongodbPassword, String mongodbHost, String mongodbDatabase, String mongodbPort,
                              String exportCVSFilePath, String exportCVSFileEncoding, String isShowTableHead,
-                             String calculationSecondsAhead, String statisticalFieldValues) {
+                             String calculationSecondsAhead, String statisticalFieldValues,String isStatisticalNoResponseField) {
         this.log4j2RunModel = log4j2RunModel;
         this.elasticsearchUrl = elasticsearchUrl;
         this.elasticsearchCluster = elasticsearchCluster;
@@ -59,6 +60,7 @@ public class SystemProperties {
         this.isShowTableHead = isShowTableHead;
         this.calculationSecondsAhead = calculationSecondsAhead;
         this.statisticalFieldValues = statisticalFieldValues;
+        this.isStatisticalNoResponseField = isStatisticalNoResponseField;
     }
 
     /**
@@ -152,6 +154,10 @@ public class SystemProperties {
     }
 
 
+    public String getIsStatisticalNoResponseField() {
+        return isStatisticalNoResponseField;
+    }
+
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
@@ -171,6 +177,7 @@ public class SystemProperties {
                 .add("isShowTableHead", isShowTableHead)
                 .add("calculationSecondsAhead", calculationSecondsAhead)
                 .add("statisticalFieldValues", statisticalFieldValues)
+                .add("isStatisticalNoResponseField", isStatisticalNoResponseField)
                 .toString();
     }
 }

@@ -96,7 +96,7 @@ public final class TopoService {
                         final String nodeName = node.attribute("name").getValue();
                         final String aliasNodeName = node.attribute("alias").getValue();
                         checkArgument(!nodeName.isEmpty(), "节点 name 不能为空");
-                        checkArgument(!aliasNodeName.isEmpty(),"节点 " + nodeName + " 别名不能为空");
+                        checkArgument(!aliasNodeName.isEmpty(), "节点 " + nodeName + " 别名不能为空");
                         ALIAS.put(nodeName, aliasNodeName);
                         i0++;
                         nodeNames.add(nodeName);
@@ -123,6 +123,8 @@ public final class TopoService {
      */
     public static void analyzerTopoForDb() {
 
+        LOGGER.debug("invoke analyzerTopoForDb...");
+
         //将路径 id 转换为 {$in:[...]} 格式
         final Set<String> topoIds = TOPO_ID_NODE_NAMES.keySet();
         final int topoIdSize = topoIds.size();
@@ -147,35 +149,37 @@ public final class TopoService {
             final Object id = next.get("_id");
             final Object name = next.get("name");
 
-            try {
-
-                List<Connection> connectionList = Lists.newArrayList();
-                final BasicBSONList connections = ((BasicBSONList) next.get("connections"));
-                for (Object connection : connections) {
-                    final BasicDBObject basicDBObject = (BasicDBObject) connection;
+            List<Connection> connectionList = Lists.newArrayList();
+            final BasicBSONList connections = ((BasicBSONList) next.get("connections"));
+            for (Object connection : connections) {
+                final BasicDBObject basicDBObject = (BasicDBObject) connection;
+                try {
                     connectionList.add(
                             new Connection(basicDBObject.get("source").toString(),
                                     basicDBObject.get("target").toString(),
                                     basicDBObject.get("streamid").toString())
                     );
+                } catch (Exception e) {
+                    LOGGER.warn("配置文件匹配数据库记录解析 查询数据库连接线过程中 路径 id= {} name= {} 解析出错 error= {} , 默认不进行统计,请核对", id, name, e);
                 }
+            }
 
-                List<Node> nodeList = Lists.newArrayList();
-                final BasicBSONList nodes = ((BasicBSONList) next.get("nodes"));
-                for (Object o : nodes) {
-                    final BasicDBObject basicDBObject = (BasicDBObject) o;
+            List<Node> nodeList = Lists.newArrayList();
+            final BasicBSONList nodes = ((BasicBSONList) next.get("nodes"));
+            for (Object o : nodes) {
+                final BasicDBObject basicDBObject = (BasicDBObject) o;
+                try {
                     nodeList.add(
                             new Node(basicDBObject.get("node_id").toString(),
                                     basicDBObject.get("name").toString(),
                                     basicDBObject.get("streamDirection").toString())
                     );
+                } catch (Exception e) {
+                    LOGGER.warn("配置文件匹配数据库记录解析 查询数据库节点过程中 路径 id= {} name= {} 解析出错 error= {} , 默认不进行统计,请核对", id, name, e);
                 }
-
-                topoList.add(new Topo(id.toString(), name.toString(), nodeList, connectionList));
-
-            } catch (Exception e) {
-                LOGGER.error("配置文件匹配数据库记录解析 查询数据库过程中 路径 id= {} name= {} 解析出错 error= {} , 默认不进行统计,请核对", id, name, e.getMessage());
             }
+
+            topoList.add(new Topo(id.toString(), name.toString(), nodeList, connectionList));
         }
 
 

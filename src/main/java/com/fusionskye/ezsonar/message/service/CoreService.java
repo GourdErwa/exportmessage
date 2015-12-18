@@ -23,10 +23,6 @@ public class CoreService {
      * 1分钟毫秒数
      */
     private static final long MILLISECOND_IN_MINUTE = 60 * 1000L;
-    /**
-     * 是否删除有空数据的行
-     */
-    private static final boolean DELETE_HAS_NULL_VALUE_LINE = true;
 
     private final Timer timer = new Timer();
 
@@ -37,6 +33,7 @@ public class CoreService {
         this.systemProperties = systemProperties;
         this.esService = new EsService(this);
     }
+
 
     /**
      * 导出 cvs 文件
@@ -73,7 +70,7 @@ public class CoreService {
 
             final Set<Map.Entry<String, String>> entries = EsService.getStatisticsGroupFieldMap().entrySet();
 
-            String headStr = "时间,节点名称,交易数量,响应数量,响应时间";
+            StringBuilder headStr = new StringBuilder("时间,节点名称,交易数量,响应数量,响应时间");
             List<String> headStrList = Lists.newArrayList();
             List<String> fieldStrList = Lists.newArrayList();
 
@@ -88,10 +85,10 @@ public class CoreService {
             //是否显示表头
             if (this.getSystemProperties().getIsShowTableHead().equalsIgnoreCase(Boolean.TRUE.toString())) {
                 for (String value : headStrList) {
-                    headStr += "," + value;
+                    headStr.append(",").append(value);
                 }
-                headStr += "\r\n";
-                writer.write(headStr);
+                headStr.append("\r\n");
+                writer.write(headStr.toString());
             }
 
             //写入内容
@@ -132,7 +129,7 @@ public class CoreService {
             LOGGER.info("导出 cvs 文件, 路径= {} 别名={}, 节点= {} 别名={} , 文件目录= {}",
                     topoName, aliasTopoName, nodeName, aliasNodeName, csvFile.getPath());
 
-        } catch (Exception e) {
+        } catch (IOException e) {
             LOGGER.error("导出 cvs 文件过程错误 ,路径= {} , 节点= {} ,error={}", topoName, nodeName, e.getMessage());
         } finally {
             try {
@@ -150,8 +147,13 @@ public class CoreService {
      * 启动任务
      */
     public void invoke() {
+        //  运行时间为 每分钟第 55 秒
+        int i = Calendar.getInstance().get(Calendar.SECOND);
+        int i1 = 55 - i;
+        i1 = i1 < 0 ? (60 - i + 55) : i1;
 
-        timer.scheduleAtFixedRate(new TimerTaskHandle(this), 0L, 60 * 1000L);
+        timer.scheduleAtFixedRate(new ExportMessageTimerTask(this), i1 * 1000L, MILLISECOND_IN_MINUTE);
+        timer.scheduleAtFixedRate(new RefreshTopoTimerTaskHandle(), 30 * MILLISECOND_IN_MINUTE, 30 * MILLISECOND_IN_MINUTE);
     }
 
     public SystemProperties getSystemProperties() {
@@ -168,13 +170,13 @@ public class CoreService {
 
 
     /**
-     * 实现定时任务
+     * 实现定时任务 查询 ES , 导出 ES 查询结果数据
      */
-    class TimerTaskHandle extends TimerTask {
+    class ExportMessageTimerTask extends TimerTask {
 
         private CoreService coreService;
 
-        public TimerTaskHandle(CoreService coreService) {
+        public ExportMessageTimerTask(CoreService coreService) {
             this.coreService = coreService;
         }
 
@@ -192,13 +194,28 @@ public class CoreService {
             long startTimeMsc = (currentTimeMillis - 1000L * calculationSecondsAhead);
             long endTimeMsc = startTimeMsc + MILLISECOND_IN_MINUTE;
 
-            final List<SearchVo> search = coreService.esService.search(startTimeMsc, endTimeMsc);
             final String exportCVSFilePath = coreService.getSystemProperties().getExportCVSFilePath();
 
+            final List<SearchVo> search = coreService.esService.search(startTimeMsc, endTimeMsc);
             for (SearchVo vo : search) {
                 createCSVFile(vo, exportCVSFilePath);
             }
 
+        }
+    }
+
+    /**
+     * 实现定时任务 刷新 topo 数据库内容
+     */
+    class RefreshTopoTimerTaskHandle extends TimerTask {
+
+        /**
+         * The action to be performed by this timer task.
+         */
+        @Override
+        public void run() {
+
+            TopoService.analyzerTopoForDb();
         }
     }
 }

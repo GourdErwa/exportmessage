@@ -2,6 +2,8 @@ package com.fusionskye.ezsonar.message.model;
 
 import com.google.common.base.MoreObjects;
 
+import java.util.List;
+
 /**
  * @author wei.Li by 15/12/8
  */
@@ -10,11 +12,20 @@ public class LinkedNode {
     private String key;
     private Object value;
 
-    private LinkedNode next;
+    //数据是否进行分组
+    private boolean isGroup = true;
+
+    private List<LinkedNode> linkedNodes;
 
     public LinkedNode(String key, Object value) {
         this.key = key;
         this.value = value;
+    }
+
+    public LinkedNode(String key, Object value, boolean isGroup) {
+        this.key = key;
+        this.value = value;
+        this.isGroup = isGroup;
     }
 
     public String getKey() {
@@ -25,25 +36,20 @@ public class LinkedNode {
         return value;
     }
 
-    public LinkedNode getNext() {
-        return next;
+    public boolean isGroup() {
+        return isGroup;
     }
 
-    public void setNext(LinkedNode next) {
-        this.next = next;
+    public void setGroup(boolean group) {
+        isGroup = group;
     }
 
-    /**
-     * 获取某个节点的尾节点
-     * @param linkedNode
-     * @return
-     */
-    public static LinkedNode getTailNode(LinkedNode linkedNode) {
-        final LinkedNode next = linkedNode.getNext();
-        if (next == null) {
-            return linkedNode;
-        }
-        return getTailNode(next);
+    public List<LinkedNode> getLinkedNodes() {
+        return linkedNodes;
+    }
+
+    public void setLinkedNodes(List<LinkedNode> linkedNodes) {
+        this.linkedNodes = linkedNodes;
     }
 
     @Override
@@ -51,7 +57,7 @@ public class LinkedNode {
         return MoreObjects.toStringHelper(this)
                 .add("key", key)
                 .add("value", value)
-                .add("next", next)
+                .add("next", linkedNodes)
                 .toString();
     }
 }

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<statisticsTopos>
+
+    <!--以下为配置示例-->
+
+    <!--
+    alias 内容为导出 cvs 文件时使用的文件夹名称
+    topo 中 ,id = 路径 id
+    statisticsNodes 节点下配置当前路径下待统计的节点
+    节点在同一个路径下重名情况下,默认统计第一个重名的节点
+    -->
+    <topo id="55a863b0e4b0e0cb988d0674" alias="TestData">
+        <statisticsNodes>
+            <node name="入口节点" alias="入口节点"/>
+            <node name="出口2" alias="出口2"/>
+        </statisticsNodes>
+    </topo>
+
+    <topo id="54d1c2068e8b674363bf227c" alias="bb">
+        <statisticsNodes>
+            <node name="WEB集群" alias="b1"/>
+            <node name="交换中心" alias="b2"/>
+            <node name="个人网银" alias="b3"/>
+            <node name="公司网银" alias="b4"/>
+            <node name="不匹配" alias="b5"/>
+        </statisticsNodes>
+    </topo>
+
+</statisticsTopos>

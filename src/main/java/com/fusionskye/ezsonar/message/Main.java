@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.Properties;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -24,22 +25,32 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public final class Main {
 
     //待统计的 业务路径-节点 配置文件目录,目前采用相对路径
-    public static final String TOPO_NODE_XML_FILE_PATH = "./../conf/topoNode.xml";
+    public static final String
+            TOPO_NODE_XML_FILE_PATH = "./../conf/topoNode.xml",
+            CONF_SYSTEM_PROPERTIES = "./../conf/system.properties",
+            LOG_4_J_2_PATH = "./../conf/log4j2.xml";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
-    private static final String CONF_SYSTEM_PROPERTIES = "./../conf/system.properties";
-    private static final String LOG_4_J_2_PATH = "./../conf/log4j2.xml";
     private static SystemProperties SYSTEM_PROPERTIES_OBJ = null;
 
     static {
         Properties properties = new Properties();
+        FileReader reader = null;
         try {
-            properties.load(new FileReader(CONF_SYSTEM_PROPERTIES));
+            reader = new FileReader(CONF_SYSTEM_PROPERTIES);
+            properties.load(reader);
             SYSTEM_PROPERTIES_OBJ = SystemProperties.createSystemProperties(properties);
 
         } catch (Exception e) {
             exitSystem("载入配置文件错误 , error = " + e.getMessage());
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException ignored) {
+                }
+            }
         }
     }
 
@@ -72,7 +83,8 @@ public final class Main {
             //Runtime.getRuntime().addShutdownHook(new ShutdownHandlerThread(coreService));
 
         } catch (Exception e) {
-            exitSystem("初始化任务过程出错," + e);
+            e.printStackTrace();
+            exitSystem("初始化任务过程出错");
             //new ShutdownHandlerThread(coreService).run();
         }
 
