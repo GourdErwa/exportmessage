@@ -18,11 +18,22 @@
 
     <topo id="54d1c2068e8b674363bf227c" alias="bb">
         <statisticsNodes>
-            <node name="WEB集群" alias="b1"/>
-            <node name="交换中心" alias="b2"/>
+            <node name="出口2" alias="入口节点"/>
+            <node name="交换中心" alias="b1"/>
             <node name="个人网银" alias="b3"/>
             <node name="公司网银" alias="b4"/>
             <node name="不匹配" alias="b5"/>
+        </statisticsNodes>
+    </topo>
+
+    <topo id="5524e3f677c8175d2c37c624" alias="ana-test">
+        <statisticsNodes>
+            <node name="ana-测试-01-入口" alias="01"/>
+            <node name="ana-测试-02-入口" alias="02"/>
+            <node name="ana-测试-03-负载均衡" alias="03"/>
+            <node name="ana-测试-04-服务器" alias="04"/>
+            <node name="ana-测试-05-服务器" alias="05"/>
+            <node name="数据库" alias="06"/>
         </statisticsNodes>
     </topo>
 

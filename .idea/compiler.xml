@@ -24,8 +24,16 @@
         <processorPath useClasspath="true" />
         <module name="ezsonar-ExportMessage-CMB" />
       </profile>
+      <profile default="false" name="Annotation profile for exportmessage-CMB" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="true" />
+        <module name="exportmessage-CMB" />
+      </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="exportmessage-CMB" target="1.6" />
       <module name="ezsonar-ExportMessage-CMB" target="1.6" />
     </bytecodeTargetLevel>
   </component>

@@ -61,7 +61,8 @@ public class Topo {
         checkNotNull(nodeNames);
         checkNotNull(this.nodeList);
 
-        Iterator<String> iterator = nodeNames.iterator();
+        List<String> nodeNamesCopy = Lists.newArrayList(nodeNames);
+        Iterator<String> iterator = nodeNamesCopy.iterator();
         while (iterator.hasNext()) {
             String next = iterator.next();
             for (Node node : this.nodeList) {
@@ -87,7 +88,7 @@ public class Topo {
             }
         }
 
-        return nodeNames;
+        return nodeNamesCopy;
     }
 
     /**
@@ -106,16 +107,17 @@ public class Topo {
         }
 
         // 判断客户端属性，获得出口流
-        final String streamDirection = node.getStreamDirection();
+        //该流无客户端计算规则属性时,默认计算流入流
+        String streamDirection = node.getStreamDirection();
         if (streamDirection == null) {
-            return EMPTY_STRING_ARRAY;
+            streamDirection = Node.IN;
         }
 
-        if (streamDirection.equals(Node.OUT)) {
+        if (Node.OUT.equals(streamDirection)) {
             streamInfo = fetchNodeStreamIdsByFlowType(nodeId, Node.OUT);
-        } else if (streamDirection.equals(Node.IN)) {
+        } else if (Node.IN.equals(streamDirection)) {
             streamInfo = fetchNodeStreamIdsByFlowType(nodeId, Node.IN);
-        } else if (streamDirection.equals(Node.DOUBLE)) {
+        } else if (Node.DOUBLE.equals(streamDirection)) {
             streamInfo = fetchNodeStreamIdsByFlowType(nodeId, Node.IN);
         }
         return streamInfo;
@@ -153,7 +155,7 @@ public class Topo {
         final List<Connection> connList = this.getConnList();
         if (!(connList == null || nodeId == null)) {
             for (Connection conn : connList) {
-                String targetNodeId = flowType.equalsIgnoreCase(Node.IN) ? conn.getTarget() : conn.getSource();
+                String targetNodeId = Node.IN.equalsIgnoreCase(flowType) ? conn.getTarget() : conn.getSource();
 
                 if (targetNodeId != null && targetNodeId.equalsIgnoreCase(nodeId)) {
                     if (!(conn.getStreamid() == null || conn.getStreamid().equals(""))) {

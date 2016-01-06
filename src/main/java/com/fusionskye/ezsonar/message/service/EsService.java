@@ -19,6 +19,8 @@ import org.elasticsearch.search.aggregations.bucket.terms.InternalTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsBuilder;
 import org.elasticsearch.search.aggregations.metrics.stats.InternalStats;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.NumberFormat;
 import java.util.*;
@@ -37,7 +39,7 @@ public final class EsService {
             COUNT_FIELD_NAME = "count",
             RESPONSE_FIELD_NAME = "response",
             NO_RESPONSE_FIELD_NAME = "no_response";
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(EsService.class);
     //默认统计的字段
    /* public static final ImmutableMultimap<String, String> DEFAULT_STATISTICS_FIELD_MAP = ImmutableMultimap.of(
             COUNT_FIELD_NAME, "交易数量",
@@ -194,7 +196,13 @@ public final class EsService {
 
             for (Node node : nodes) {
                 SearchVo searchVo = new SearchVo(from, to, id, name, node);
-                List<LinkedNode> linkedNodes = getLinkedNodesSearchEs(searchVo, indexType, indexName);
+                List<LinkedNode> linkedNodes;
+                try {
+                    linkedNodes = getLinkedNodesSearchEs(searchVo, indexType, indexName);
+                } catch (Exception e) {
+                    LOGGER.error("node search error . node = {} , error = {}", node, e.getMessage());
+                    continue;
+                }
                 searchVo.setData(linkedNodes);
                 data.add(searchVo);
             }
@@ -209,7 +217,7 @@ public final class EsService {
      * @param indexName 索引名称
      * @return 查询结果
      */
-    private List<LinkedNode> getLinkedNodesSearchEs(SearchVo searchVo, String indexType, String indexName) {
+    private List<LinkedNode> getLinkedNodesSearchEs(SearchVo searchVo, String indexType, String indexName) throws Exception {
 
         final SearchRequestBuilder searchRequestBuilder = ESClient.getClient().
                 prepareSearch(indexName).
@@ -284,8 +292,8 @@ public final class EsService {
         mustFilterList.add(smallRangeFb);
 
 
-        final TermFilterBuilder termFilterBuilder = FilterBuilders.termFilter(STREAMS_FIELD_NAME, searchVo.getNode().getStatisticsStreamIds());
-        mustFilterList.add(termFilterBuilder);
+        final TermsFilterBuilder termsFilterBuilder = FilterBuilders.termsFilter(STREAMS_FIELD_NAME, searchVo.getNode().getStatisticsStreamIds());
+        mustFilterList.add(termsFilterBuilder);
 
         return mustFilterList;
     }

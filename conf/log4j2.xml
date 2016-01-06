@@ -3,7 +3,7 @@
 
     <properties>
         <!-- 定义日志输出所在目录,以'/'结尾 -->
-        <property name="filename">/lw/workfile/log/exportMessage/</property>
+        <property name="filename">/lw/workfile/log/exportMessage-CMB/</property>
         <!--<property name="filename">/var/log/ezsonar/exportMessage/</property>-->
     </properties>
 

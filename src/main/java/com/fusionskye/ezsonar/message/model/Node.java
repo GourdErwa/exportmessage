@@ -66,6 +66,9 @@ public class Node {
         return MoreObjects.toStringHelper(this)
                 .add("node_id", node_id)
                 .add("name", name)
+                .add("streamDirection", streamDirection)
+                .add("statisticsStreamIds", statisticsStreamIds == null ? null : Arrays.toString(statisticsStreamIds))
                 .toString();
     }
+
 }

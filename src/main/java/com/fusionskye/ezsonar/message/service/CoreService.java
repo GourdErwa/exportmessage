@@ -11,7 +11,7 @@ import java.io.*;
 import java.util.*;
 
 /**
- * 执行定时任务,导出 cvs 文件
+ * 执行定时任务,导出 csv 文件
  *
  * @author wei.Li by 15/12/8
  */
@@ -36,7 +36,7 @@ public class CoreService {
 
 
     /**
-     * 导出 cvs 文件
+     * 导出 csv 文件
      * EZSonar 导出的数据存放路径如下，字母命名， 文件名使用日期&时间格式， 例如 “201512031200”
      * 文件为一分钟一个文件，目录结构：
      * 一级目录:业务路径，如***系统
@@ -52,19 +52,21 @@ public class CoreService {
 
         final String encoding = this.getSystemProperties().getExportCVSFileEncoding();
         final String topoName = searchVo.getTopoName();
-        final String aliasTopoName = TopoService.getAliasName(searchVo.getTopoId());
+        String topoId = searchVo.getTopoId();
+        final String aliasTopoName = TopoService.getAliasName(topoId);
 
         final String nodeName = searchVo.getNode().getName();
 
-        final String aliasNodeName = TopoService.getAliasName(nodeName);
+        final String aliasNodeName = TopoService.getAliasName(topoId + nodeName);
         final String pathname = outPutRootPath + File.separator + aliasTopoName + File.separator + aliasNodeName;
 
-        File csvFile = new File(pathname + File.separator + searchVo.getFileNameStartTimeFormat() + ".csv");
+        String fileNamePrefix = pathname + File.separator + searchVo.getFileNameStartTimeFormat();
+        File csvTempFile = new File(fileNamePrefix + ".temp");
 
         try {
 
-            Files.createParentDirs(csvFile);
-            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(csvFile), encoding), 1024);
+            Files.createParentDirs(csvTempFile);
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(csvTempFile), encoding), 1024);
 
             // 写入文件头部
 
@@ -94,9 +96,6 @@ public class CoreService {
             //写入内容
             final String startTimeFormat = searchVo.getStartTimeFormat();
 
-            LOGGER.debug("导出 cvs 文件, 路径= {} 别名={}, 节点= {} 别名={} , 内容= {}",
-                    topoName, aliasTopoName, nodeName, aliasNodeName, searchVo);
-
             StringBuilder builder;
             Loop1:
             for (Map<String, Object> map : searchVo.getData()) {
@@ -125,12 +124,14 @@ public class CoreService {
                 writer.write(builder.toString());
                 //writer.newLine();
             }
-
-            LOGGER.info("导出 cvs 文件, 路径= {} 别名={}, 节点= {} 别名={} , 文件目录= {}",
-                    topoName, aliasTopoName, nodeName, aliasNodeName, csvFile.getPath());
+            File to = new File(fileNamePrefix + ".csv");
+            csvTempFile.renameTo(to);
+            csvTempFile.delete();
+            LOGGER.info("导出 csv 文件, 路径= {} 别名={}, 节点= {} 别名={} , 内容大小= {} , 文件目录= {}",
+                    topoName, aliasTopoName, nodeName, aliasNodeName, searchVo.getData().size(), to.getPath());
 
         } catch (IOException e) {
-            LOGGER.error("导出 cvs 文件过程错误 ,路径= {} , 节点= {} ,error={}", topoName, nodeName, e.getMessage());
+            LOGGER.error("导出 csv 文件过程错误 ,路径= {} , 节点= {} ,error={}", topoName, nodeName, e.getMessage());
         } finally {
             try {
                 if (writer != null) {
@@ -138,7 +139,7 @@ public class CoreService {
                     writer.close();
                 }
             } catch (IOException e) {
-                LOGGER.error("导出 cvs 文件关闭 IO 错误 ,路径= {} , 节点= {} ,error={}", topoName, nodeName, e.getMessage());
+                LOGGER.error("导出 csv 文件关闭 IO 错误 ,路径= {} , 节点= {} ,error={}", topoName, nodeName, e.getMessage());
             }
         }
     }
@@ -215,7 +216,11 @@ public class CoreService {
         @Override
         public void run() {
 
-            TopoService.analyzerTopoForDb();
+            try {
+                TopoService.analyzerTopoForDb();
+            } catch (Exception e) {
+                LOGGER.error("TopoService#analyzerTopoForDb , error={}", e);
+            }
         }
     }
 }
