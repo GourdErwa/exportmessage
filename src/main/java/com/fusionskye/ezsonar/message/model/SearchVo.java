@@ -27,7 +27,7 @@ public class SearchVo {
     private String topoName;
     //节点信息
     private Node node;
-    //查询结果数据
+    //查询结果数据 ,响应时间为 s
     private List<Map<String, Object>> data = Lists.newArrayList();
 
     public SearchVo(long startTime, long endTime, String topoId, String topoName, Node node) {

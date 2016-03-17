@@ -31,9 +31,9 @@ import static org.elasticsearch.common.Preconditions.checkNotNull;
 /**
  * @author wei.Li by 15/12/7
  */
-public final class EsService {
+final class EsService {
 
-    public static final String TIME_FIELD_NAME = "_start_at",
+    static final String TIME_FIELD_NAME = "_start_at",
             STREAMS_FIELD_NAME = "streams",
             LATENCY_MSEC_FIELD_NAME = "_latency_msec",
             COUNT_FIELD_NAME = "count",
@@ -56,20 +56,20 @@ public final class EsService {
     private static AggregationBuilder retCodeBuilders = null, retCodeNoResponseBuilders = null;
 
     static {
-        //小数点保留 2 位格式化
+        //小数点保留 3 位格式化
         NUMBER_FORMAT = NumberFormat.getNumberInstance();
-        NUMBER_FORMAT.setMaximumFractionDigits(2);
+        NUMBER_FORMAT.setMaximumFractionDigits(3);
         NUMBER_FORMAT.setGroupingUsed(false);
     }
 
     private CoreService coreService;
 
-    public EsService(CoreService coreService) {
+    EsService(CoreService coreService) {
         this.coreService = coreService;
         analyzerStatisticsGroupField();
     }
 
-    public static Map<String, String> getStatisticsGroupFieldMap() {
+    static Map<String, String> getStatisticsGroupFieldMap() {
         return STATISTICS_GROUP_FIELD_MAP;
     }
 
@@ -178,7 +178,7 @@ public final class EsService {
      * @param to   查询结束时间(ms)
      * @return 查询结果
      */
-    public List<SearchVo> search(long from, long to) {
+    List<SearchVo> search(long from, long to) {
 
         //拼接索引名称
         final SystemProperties systemProperties = this.coreService.getSystemProperties();
@@ -331,10 +331,10 @@ public final class EsService {
                 //提取响应时间时默认同时提取 交易量/响应数量
                 final InternalStats internalStats = (InternalStats) value;
                 final long count = internalStats.getCount();
-                final double avg = internalStats.getAvg();
+                final double sum = internalStats.getSum() / 1000;
 
                 final LinkedNode countNode = new LinkedNode(COUNT_FIELD_NAME, count, false);
-                final LinkedNode latencyMsecNode = new LinkedNode(LATENCY_MSEC_FIELD_NAME, NUMBER_FORMAT.format(avg), false);
+                final LinkedNode latencyMsecNode = new LinkedNode(LATENCY_MSEC_FIELD_NAME, NUMBER_FORMAT.format(sum), false);
 
                 final InternalFilter internalFilter = (InternalFilter) aggregations.get(RESPONSE_FIELD_NAME);
                 final long docCount = internalFilter.getDocCount();

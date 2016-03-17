@@ -61,8 +61,8 @@ public class Topo {
         checkNotNull(nodeNames);
         checkNotNull(this.nodeList);
 
-        List<String> nodeNamesCopy = Lists.newArrayList(nodeNames);
-        Iterator<String> iterator = nodeNamesCopy.iterator();
+        final List<String> nodeNamesCopy = Lists.newArrayList(nodeNames);
+        final Iterator<String> iterator = nodeNamesCopy.iterator();
         while (iterator.hasNext()) {
             String next = iterator.next();
             for (Node node : this.nodeList) {
@@ -151,15 +151,16 @@ public class Topo {
      */
     private String[] fetchNodeStreamIdsByFlowType(String nodeId, String flowType) {
 
-        List<String> retList = Lists.newArrayList();
+        final List<String> retList = Lists.newArrayList();
         final List<Connection> connList = this.getConnList();
         if (!(connList == null || nodeId == null)) {
             for (Connection conn : connList) {
                 String targetNodeId = Node.IN.equalsIgnoreCase(flowType) ? conn.getTarget() : conn.getSource();
 
                 if (targetNodeId != null && targetNodeId.equalsIgnoreCase(nodeId)) {
-                    if (!(conn.getStreamid() == null || conn.getStreamid().equals(""))) {
-                        retList.add(conn.getStreamid());
+                    final String connStreamId = conn.getStreamid();
+                    if (!(connStreamId == null || connStreamId.equals(""))) {
+                        retList.add(connStreamId);
                     }
                 }
             }

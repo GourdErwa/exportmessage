@@ -173,11 +173,11 @@ public class CoreService {
     /**
      * 实现定时任务 查询 ES , 导出 ES 查询结果数据
      */
-    class ExportMessageTimerTask extends TimerTask {
+    private class ExportMessageTimerTask extends TimerTask {
 
         private CoreService coreService;
 
-        public ExportMessageTimerTask(CoreService coreService) {
+        ExportMessageTimerTask(CoreService coreService) {
             this.coreService = coreService;
         }
 
@@ -208,7 +208,7 @@ public class CoreService {
     /**
      * 实现定时任务 刷新 topo 数据库内容
      */
-    class RefreshTopoTimerTaskHandle extends TimerTask {
+    private class RefreshTopoTimerTaskHandle extends TimerTask {
 
         /**
          * The action to be performed by this timer task.

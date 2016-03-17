@@ -5,6 +5,7 @@ import com.fusionskye.ezsonar.message.Main;
 import com.fusionskye.ezsonar.message.dao.MongoDBClient;
 import com.fusionskye.ezsonar.message.model.Connection;
 import com.fusionskye.ezsonar.message.model.Node;
+import com.fusionskye.ezsonar.message.model.Stream;
 import com.fusionskye.ezsonar.message.model.Topo;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -16,6 +17,7 @@ import org.bson.types.ObjectId;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
+import org.elasticsearch.common.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,11 +44,18 @@ public final class TopoService {
     private static final Logger LOGGER = LoggerFactory.getLogger(TopoService.class);
 
     //查询 Topo 对象字段
-    private static final BasicDBObject BASIC_DB_KEYS = new BasicDBObject("name", 1).append("connections", 1).append("nodes", 1);
+    private static final BasicDBObject TOPO_BASIC_DB_KEYS
+            = new BasicDBObject("name", 1).append("connections", 1).append("nodes", 1);
+    //查询流对象字段
+    private static final BasicDBObject STREAM_BASIC_DB_KEYS
+            = new BasicDBObject("success_ret_codes", 1);
+
     //待统计的业务路径 id, 节点name
     private static final Map<String, List<String>> TOPO_ID_NODE_NAMES = Maps.newHashMap();
     //待统计的业务路径封装对象
     private static final List<Topo> TOPO_STATISTICS = Lists.newArrayList();
+    //待统计流 id,流
+    private static final Map<String, Stream> STREAM_ID_STREAM_MAP = Maps.newHashMap();
 
     static {
         try {
@@ -134,52 +143,31 @@ public final class TopoService {
             objectIds[i] = new ObjectId(topoIdsArray[i]);
         }
 
-        final DBCursor dbObjects = MongoDBClient.getDB().getCollection("topos").find(
-                new BasicDBObject("_id", new BasicDBObject("$in", objectIds)),
-                BASIC_DB_KEYS
+
+        //查询所有流 <id,流> , 供节点中关联流使用
+        final DBCursor streamDbObjects = MongoDBClient.getDB().getCollection("streams").find(
+                new BasicDBObject("success_ret_codes", new BasicDBObject("$exists", true)),
+                STREAM_BASIC_DB_KEYS
         );
+        final Map<String, Stream> streamIdSuccessRetCodes = Maps.newHashMapWithExpectedSize(streamDbObjects.size());
+        while (streamDbObjects.hasNext()) {
+            final DBObject next = streamDbObjects.next();
+            final String id = next.get("_id").toString();
+            final BasicBSONList successRetCodes = ((BasicBSONList) next.get("success_ret_codes"));
+            streamIdSuccessRetCodes.put(id, new Stream(id, successRetCodes));
+        }
+        synchronized (STREAM_ID_STREAM_MAP) {
+            STREAM_ID_STREAM_MAP.clear();
+            STREAM_ID_STREAM_MAP.putAll(streamIdSuccessRetCodes);
+        }
+
 
         //解析查询结果,映射为 topo 对象
-        List<Topo> topoList = Lists.newArrayList();
-
-        while (dbObjects.hasNext()) {
-            final DBObject next = dbObjects.next();
-
-            final Object id = next.get("_id");
-            final Object name = next.get("name");
-
-            List<Connection> connectionList = Lists.newArrayList();
-            final BasicBSONList connections = ((BasicBSONList) next.get("connections"));
-            for (Object connection : connections) {
-                final BasicDBObject basicDBObject = (BasicDBObject) connection;
-                try {
-                    connectionList.add(
-                            new Connection(basicDBObject.get("source").toString(),
-                                    basicDBObject.get("target").toString(),
-                                    basicDBObject.get("streamid").toString())
-                    );
-                } catch (Exception e) {
-                    LOGGER.warn("配置文件匹配数据库记录解析 查询数据库连接线过程中 路径 id= {} name= {} 解析出错 error= {} , 默认不进行统计,请核对", id, name, e);
-                }
-            }
-
-            List<Node> nodeList = Lists.newArrayList();
-            final BasicBSONList nodes = ((BasicBSONList) next.get("nodes"));
-            for (Object o : nodes) {
-                final BasicDBObject basicDBObject = (BasicDBObject) o;
-                try {
-                    nodeList.add(
-                            new Node(basicDBObject.get("node_id").toString(),
-                                    basicDBObject.get("name").toString(),
-                                    basicDBObject.get("streamDirection").toString())
-                    );
-                } catch (Exception e) {
-                    LOGGER.warn("配置文件匹配数据库记录解析 查询数据库节点过程中 路径 id= {} name= {} 解析出错 error= {} , 默认不进行统计,请核对", id, name, e);
-                }
-            }
-
-            topoList.add(new Topo(id.toString(), name.toString(), nodeList, connectionList));
-        }
+        final DBCursor topoDbObjects = MongoDBClient.getDB().getCollection("topos").find(
+                new BasicDBObject("_id", new BasicDBObject("$in", objectIds)),
+                TOPO_BASIC_DB_KEYS
+        );
+        List<Topo> topoList = analyticalToposDBResults(topoDbObjects);
 
 
         //比对配置文件的 nodeName 与数据库中时候匹配,同时计算每个节点统计时所需的流id
@@ -204,14 +192,74 @@ public final class TopoService {
             TOPO_STATISTICS.clear();
             TOPO_STATISTICS.addAll(topoList);
         }
+
+
+    }
+
+    /**
+     * 解析查询 路径 mongodb 查询结果为 Topo 对象
+     *
+     * @param topoDbObjects topoDbObjects
+     * @return List<Topo>
+     */
+    private static List<Topo> analyticalToposDBResults(DBCursor topoDbObjects) {
+
+        final List<Topo> topoList = Lists.newArrayList();
+
+        while (topoDbObjects.hasNext()) {
+            final DBObject next = topoDbObjects.next();
+
+            final Object id = next.get("_id");
+            final Object name = next.get("name");
+
+            List<Connection> connectionList = Lists.newArrayList();
+            final BasicBSONList connections = ((BasicBSONList) next.get("connections"));
+            for (Object connection : connections) {
+                final BasicDBObject basicDBObject = (BasicDBObject) connection;
+                try {
+                    connectionList.add(
+                            new Connection(basicDBObject.get("source").toString(),
+                                    basicDBObject.get("target").toString(),
+                                    basicDBObject.get("streamid").toString())
+                    );
+                } catch (Exception e) {
+                    LOGGER.warn("配置文件匹配数据库记录解析 查询数据库连接线过程中 路径 id= {} name= {} 解析出错 error= {} , 默认不进行统计,请核对", id, name, e);
+                }
+            }
+
+            final List<Node> nodeList = Lists.newArrayList();
+            final BasicBSONList nodes = ((BasicBSONList) next.get("nodes"));
+            for (Object o : nodes) {
+                final BasicDBObject basicDBObject = (BasicDBObject) o;
+                try {
+                    nodeList.add(
+                            new Node(basicDBObject.get("node_id").toString(),
+                                    basicDBObject.get("name").toString(),
+                                    basicDBObject.get("streamDirection").toString())
+                    );
+                } catch (Exception e) {
+                    LOGGER.warn("配置文件匹配数据库记录解析 查询数据库节点过程中 路径 id= {} name= {} 解析出错 error= {} , 默认不进行统计,请核对", id, name, e);
+                }
+            }
+
+            topoList.add(new Topo(id.toString(), name.toString(), nodeList, connectionList));
+        }
+        return topoList;
     }
 
 
-    public static List<Topo> getTopoStatistics() {
+    static List<Topo> getTopoStatistics() {
         return Lists.newArrayList(TOPO_STATISTICS);
     }
 
-    public static String getAliasName(String id) {
+    static String getAliasName(String id) {
         return ALIAS.get(id);
     }
+
+    public static
+    @Nullable
+    Stream getStream(String streamId) {
+        return STREAM_ID_STREAM_MAP.get(streamId);
+    }
+
 }

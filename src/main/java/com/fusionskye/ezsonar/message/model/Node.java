@@ -1,6 +1,9 @@
 package com.fusionskye.ezsonar.message.model;
 
+import com.fusionskye.ezsonar.message.service.TopoService;
+import com.fusionskye.ezsonar.message.util.QueryCondition;
 import com.google.common.base.MoreObjects;
+import org.elasticsearch.index.query.FilterBuilder;
 
 import java.util.Arrays;
 
@@ -9,9 +12,9 @@ import java.util.Arrays;
  */
 public class Node {
 
-    public static final String IN = "in";//流入
-    public static final String OUT = "out";//流出
-    public static final String DOUBLE = "double";//两边
+    static final String IN = "in";//流入
+    static final String OUT = "out";//流出
+    static final String DOUBLE = "double";//两边
 
     /**
      * 节点ID
@@ -31,6 +34,11 @@ public class Node {
      * 统计此节点数据所需流id
      */
     private String[] statisticsStreamIds;
+
+    /**
+     * 统计此节点数据所需流id 对应组合的成功数量过滤条件
+     */
+    private FilterBuilder statisticsStreamSucceedFilter;
 
     public Node() {
     }
@@ -58,7 +66,21 @@ public class Node {
     }
 
     public void setStatisticsStreamIds(String[] statisticsStreamIds) {
-        this.statisticsStreamIds = statisticsStreamIds == null ? null : Arrays.copyOf(statisticsStreamIds, statisticsStreamIds.length);
+        if (statisticsStreamIds == null) {
+            this.statisticsStreamIds = null;
+        } else {
+            final int length = statisticsStreamIds.length;
+            this.statisticsStreamIds = Arrays.copyOf(statisticsStreamIds, length);
+            final Stream[] streams = new Stream[length];
+            for (int i = 0; i < length; i++) {
+                streams[i] = TopoService.getStream(statisticsStreamIds[i]);
+            }
+            this.statisticsStreamSucceedFilter = QueryCondition.generateSuccessFilterBuilder(streams);
+        }
+    }
+
+    public FilterBuilder getStatisticsStreamSucceedFilter() {
+        return statisticsStreamSucceedFilter;
     }
 
     @Override
@@ -68,6 +90,7 @@ public class Node {
                 .add("name", name)
                 .add("streamDirection", streamDirection)
                 .add("statisticsStreamIds", statisticsStreamIds == null ? null : Arrays.toString(statisticsStreamIds))
+                .add("statisticsStreamSucceedFilter", statisticsStreamSucceedFilter)
                 .toString();
     }
 
