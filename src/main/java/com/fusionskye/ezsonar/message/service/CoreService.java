@@ -10,6 +10,9 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.util.*;
 
+import static com.fusionskye.ezsonar.message.service.EsService.SUCCESS_NO;
+import static com.fusionskye.ezsonar.message.service.EsService.SUCCESS_NO_JUDGE;
+
 /**
  * 执行定时任务,导出 csv 文件
  *
@@ -72,7 +75,7 @@ public class CoreService {
 
             final Set<Map.Entry<String, String>> entries = EsService.getStatisticsGroupFieldMap().entrySet();
 
-            StringBuilder headStr = new StringBuilder("时间,节点名称,交易数量,响应数量,响应时间");
+            StringBuilder headStr = new StringBuilder("时间,节点名称,交易数量,响应数量,响应时间,成功标识符");
             List<String> headStrList = Lists.newArrayList();
             List<String> fieldStrList = Lists.newArrayList();
 
@@ -93,6 +96,9 @@ public class CoreService {
                 writer.write(headStr.toString());
             }
 
+            //是否未配置成功返回码
+            final boolean isSuccessNoJudge = searchVo.getNode().getSettingSuccessRetCodes();
+
             //写入内容
             final String startTimeFormat = searchVo.getStartTimeFormat();
 
@@ -109,7 +115,23 @@ public class CoreService {
                 Object response = map.get(EsService.RESPONSE_FIELD_NAME);
                 response = response == null ? 0 : response;
 
-                builder.append(",").append(count).append(",").append(response).append(",").append(latencyMsec);
+                Object successCount;
+                if (isSuccessNoJudge) {
+                    successCount = SUCCESS_NO_JUDGE;
+                } else {
+                    successCount = map.get(EsService.SUCCESS_COUNT);
+                    successCount = successCount == null ? SUCCESS_NO : successCount;
+                }
+
+                builder
+                        .append(",")
+                        .append(count)
+                        .append(",")
+                        .append(response)
+                        .append(",")
+                        .append(latencyMsec)
+                        .append(",")
+                        .append(successCount);
 
                 //拼接统计字段值
                 for (String string : fieldStrList) {

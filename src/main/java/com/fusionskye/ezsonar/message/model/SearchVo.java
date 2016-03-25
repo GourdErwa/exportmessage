@@ -79,7 +79,7 @@ public class SearchVo {
      * @param data data
      */
     public void setData(List<LinkedNode> data) {
-        if (data != null) {
+        if (!(data == null || data.isEmpty())) {
             transformData(data);
         }
     }

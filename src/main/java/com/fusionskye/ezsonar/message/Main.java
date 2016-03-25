@@ -26,9 +26,9 @@ public final class Main {
 
     //待统计的 业务路径-节点 配置文件目录,目前采用相对路径
     public static final String
-            TOPO_NODE_XML_FILE_PATH = "./conf/topoNode.xml",
-            CONF_SYSTEM_PROPERTIES = "./conf/system.properties",
-            LOG_4_J_2_PATH = "./conf/log4j2.xml";
+            TOPO_NODE_XML_FILE_PATH = "./../conf/topoNode.xml",
+            CONF_SYSTEM_PROPERTIES = "./../conf/system.properties",
+            LOG_4_J_2_PATH = "./../conf/log4j2.xml";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 

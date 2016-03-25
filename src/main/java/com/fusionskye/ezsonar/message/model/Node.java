@@ -3,7 +3,7 @@ package com.fusionskye.ezsonar.message.model;
 import com.fusionskye.ezsonar.message.service.TopoService;
 import com.fusionskye.ezsonar.message.util.QueryCondition;
 import com.google.common.base.MoreObjects;
-import org.elasticsearch.index.query.FilterBuilder;
+import org.elasticsearch.common.Nullable;
 
 import java.util.Arrays;
 
@@ -36,9 +36,13 @@ public class Node {
     private String[] statisticsStreamIds;
 
     /**
-     * 统计此节点数据所需流id 对应组合的成功数量过滤条件
+     * 统计此节点数据所需流id 对应组合的成功数量过滤条件 是否已设置
+     * 2016年03月25日
+     * 如果为 null 表示未设置成功返回码,成功标识符位显示 n/a
      */
-    private FilterBuilder statisticsStreamSucceedFilter;
+    private
+    @Nullable
+    boolean isSettingSuccessRetCodes;
 
     public Node() {
     }
@@ -75,12 +79,12 @@ public class Node {
             for (int i = 0; i < length; i++) {
                 streams[i] = TopoService.getStream(statisticsStreamIds[i]);
             }
-            this.statisticsStreamSucceedFilter = QueryCondition.generateSuccessFilterBuilder(streams);
+            this.isSettingSuccessRetCodes = QueryCondition.isSettingSuccessRetCodes(streams);
         }
     }
 
-    public FilterBuilder getStatisticsStreamSucceedFilter() {
-        return statisticsStreamSucceedFilter;
+    public boolean getSettingSuccessRetCodes() {
+        return isSettingSuccessRetCodes;
     }
 
     @Override
@@ -90,7 +94,7 @@ public class Node {
                 .add("name", name)
                 .add("streamDirection", streamDirection)
                 .add("statisticsStreamIds", statisticsStreamIds == null ? null : Arrays.toString(statisticsStreamIds))
-                .add("statisticsStreamSucceedFilter", statisticsStreamSucceedFilter)
+                .add("isSettingSuccessRetCodes", isSettingSuccessRetCodes)
                 .toString();
     }
 

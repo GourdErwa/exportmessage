@@ -36,8 +36,10 @@ public class QueryCondition {
      *                分子： and[ term{streams:xxxx}, terms {success_ret_code : success_ret_code_values}]
      *                分母： and [ term{streams:xxxx}, exists{"field":success_ret_code}]
      */
+
+    public static
     @Nullable
-    public static FilterBuilder generateSuccessFilterBuilder(Stream... streams) {
+    FilterBuilder generateSuccessFilterBuilder(Stream... streams) {
 
         final List<FilterBuilder> successFilterList = Lists.newArrayList();
         if (streams != null) {
@@ -67,5 +69,31 @@ public class QueryCondition {
         return successFilterList.isEmpty() ? null :
                 FilterBuilders.boolFilter().should(successFilterList.toArray(new FilterBuilder[successFilterList.size()]));
     }
+
+    /**
+     * 是否设置过成功返回码 , 有一条流设置则为 true
+     *
+     * @param streams 多条流
+     * @return true or false
+     */
+    public static boolean isSettingSuccessRetCodes(Stream... streams) {
+
+        if (streams == null) {
+            return false;
+        }
+        boolean b = false;
+        for (Stream stream : streams) {
+            if (stream == null) {
+                continue;
+            }
+            final BasicBSONList successRetCodes = stream.getSuccess_ret_codes();
+            b = !(null == successRetCodes || successRetCodes.isEmpty());
+            if (b) {
+                break;
+            }
+        }
+        return b;
+    }
+
 
 }

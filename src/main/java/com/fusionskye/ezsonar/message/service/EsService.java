@@ -10,10 +10,7 @@ import org.elasticsearch.action.ListenableActionFuture;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.*;
-import org.elasticsearch.search.aggregations.Aggregation;
-import org.elasticsearch.search.aggregations.AggregationBuilder;
-import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.*;
 import org.elasticsearch.search.aggregations.bucket.filter.InternalFilter;
 import org.elasticsearch.search.aggregations.bucket.terms.InternalTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
@@ -38,21 +35,31 @@ final class EsService {
             LATENCY_MSEC_FIELD_NAME = "_latency_msec",
             COUNT_FIELD_NAME = "count",
             RESPONSE_FIELD_NAME = "response",
-            NO_RESPONSE_FIELD_NAME = "no_response";
+            NO_RESPONSE_FIELD_NAME = "no_response",
+            SUCCESS_COUNT = "success_count";
+
+    //"1"表示成功，"0"表示失败，其他不能判断的情况用"n/a"标记
+    static final String SUCCESS_OK = "1", SUCCESS_NO = "0", SUCCESS_NO_JUDGE = "n/a";
+
     private static final Logger LOGGER = LoggerFactory.getLogger(EsService.class);
-    //默认统计的字段
-   /* public static final ImmutableMultimap<String, String> DEFAULT_STATISTICS_FIELD_MAP = ImmutableMultimap.of(
-            COUNT_FIELD_NAME, "交易数量",
-            LATENCY_MSEC_FIELD_NAME, "响应时间",
-            RESPONSE_FIELD_NAME, "响应数量"
-    );
-*/
     //未响应过滤
     private static final TermFilterBuilder NO_RESPONSE_FILTER_BUILDER = FilterBuilders.termFilter("_ret_code.probe_st", "noresponse");
-
     //待统计分组字段 <key,别名> - 保证与配置信息顺序一致,使用 newLinkedHashMap
     private static final Map<String, String> STATISTICS_GROUP_FIELD_MAP = Maps.newLinkedHashMap();
+    //数字格式化描述
     private static final NumberFormat NUMBER_FORMAT;
+
+    private static final AbstractAggregationBuilder
+
+            SUCCESS_COUNT_FILTER_BUILDER = AggregationBuilders.filter(SUCCESS_COUNT)
+            .filter(FilterBuilders.boolFilter().must(FilterBuilders.termFilter("_is_success", 1))),
+
+    RESPONSE_BUILDER = AggregationBuilders.filter(RESPONSE_FIELD_NAME).filter(
+            FilterBuilders.notFilter(NO_RESPONSE_FILTER_BUILDER)
+    ),
+
+    LATENCY_MESC_BUILDER = AggregationBuilders.stats(LATENCY_MSEC_FIELD_NAME).field(LATENCY_MSEC_FIELD_NAME);
+
     private static AggregationBuilder retCodeBuilders = null, retCodeNoResponseBuilders = null;
 
     static {
@@ -126,13 +133,15 @@ final class EsService {
 
         termsBuilder
                 .subAggregation(
-                        AggregationBuilders.stats(LATENCY_MSEC_FIELD_NAME).field(LATENCY_MSEC_FIELD_NAME)
+                        LATENCY_MESC_BUILDER
                 )
                 .subAggregation(
-                        AggregationBuilders.filter(RESPONSE_FIELD_NAME).filter(
-                                FilterBuilders.notFilter(NO_RESPONSE_FILTER_BUILDER)
-                        )
+                        RESPONSE_BUILDER
+                )
+                .subAggregation(
+                        SUCCESS_COUNT_FILTER_BUILDER
                 );
+
         for (int i = size - 1; i > 0; i--) {
             termsBuilders.get(i - 1).subAggregation(termsBuilders.get(i));
         }
@@ -336,12 +345,18 @@ final class EsService {
                 final LinkedNode countNode = new LinkedNode(COUNT_FIELD_NAME, count, false);
                 final LinkedNode latencyMsecNode = new LinkedNode(LATENCY_MSEC_FIELD_NAME, NUMBER_FORMAT.format(sum), false);
 
-                final InternalFilter internalFilter = (InternalFilter) aggregations.get(RESPONSE_FIELD_NAME);
-                final long docCount = internalFilter.getDocCount();
-                final LinkedNode responseNode = new LinkedNode(RESPONSE_FIELD_NAME, docCount, false);
+                final InternalFilter responseFilter = (InternalFilter) aggregations.get(RESPONSE_FIELD_NAME);
+                final long responseCount = responseFilter.getDocCount();
+                final LinkedNode responseNode = new LinkedNode(RESPONSE_FIELD_NAME, responseCount, false);
 
+                //成功数量
+                final InternalFilter successCountFilter = (InternalFilter) aggregations.get(SUCCESS_COUNT);
+                final String isSuccess = successCountFilter.getDocCount() == responseCount ? SUCCESS_OK : SUCCESS_NO;
+                final LinkedNode successCount = new LinkedNode(SUCCESS_COUNT, isSuccess, false);
+
+                successCount.setLinkedNodes(Lists.newArrayList(responseNode));
                 responseNode.setLinkedNodes(Lists.newArrayList(latencyMsecNode));
-                countNode.setLinkedNodes(Lists.newArrayList(responseNode));
+                countNode.setLinkedNodes(Lists.newArrayList(successCount));
                 linkedNode.setLinkedNodes(Lists.newArrayList(countNode));
 
                 break;

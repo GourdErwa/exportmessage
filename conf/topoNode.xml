@@ -9,20 +9,28 @@
     statisticsNodes 节点下配置当前路径下待统计的节点
     节点在同一个路径下重名情况下,默认统计第一个重名的节点
     -->
-    <topo id="55a863b0e4b0e0cb988d0674" alias="TestData">
+    <topo id="5448689bcd3205cf954c2d88" alias="JPstore">
         <statisticsNodes>
-            <node name="入口节点" alias="入口节点"/>
-            <node name="出口2" alias="出口2"/>
+            <node name="WEB集群" alias="WEB集群"/>
+            <node name="负载均衡" alias="负载均衡"/>
+            <node name="APP202" alias="APP202"/>
+            <node name="APP212" alias="APP212"/>
+            <node name="BJ防火墙" alias="BJ防火墙"/>
+            <node name="sh库存系统" alias="sh库存系统"/>
+            <node name="bj库存系统" alias="bj库存系统"/>
+            <node name="bj库存db" alias="bj库存db"/>
+            <node name="sh库存db" alias="sh库存db"/>
         </statisticsNodes>
     </topo>
 
-    <topo id="54d1c2068e8b674363bf227c" alias="bb">
+    <topo id="56ea44abc130700dd8ca92a2" alias="ES底层测试">
         <statisticsNodes>
-            <node name="出口2" alias="入口节点"/>
-            <node name="交换中心" alias="b1"/>
-            <node name="个人网银" alias="b3"/>
-            <node name="公司网银" alias="b4"/>
-            <node name="不匹配" alias="b5"/>
+            <node name="第二个起点" alias="第二个起点"/>
+            <node name="起点13adfs" alias="起点13adfs"/>
+            <node name="2334234" alias="2334234"/>
+            <node name="java" alias="java"/>
+            <node name="测试无响应成功率的" alias="测试无响应成功率的"/>
+            <node name="我" alias="我"/>
         </statisticsNodes>
     </topo>
 
@@ -33,7 +41,7 @@
             <node name="ana-测试-03-负载均衡" alias="03"/>
             <node name="ana-测试-04-服务器" alias="04"/>
             <node name="ana-测试-05-服务器" alias="05"/>
-            <node name="数据库" alias="06"/>
+            <node name="ana-测试-06-数据库" alias="06"/>
         </statisticsNodes>
     </topo>
 
